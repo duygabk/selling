@@ -1,21 +1,26 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './components/app/App';
-import * as serviceWorker from './serviceWorker';
-import { Provider } from 'react-redux';
-import appStore from './store';
-import { BrowserRouter } from 'react-router-dom';
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import App from "./components/app/App";
+import * as serviceWorker from "./serviceWorker";
+import { Provider } from "react-redux";
+import appStore from "./store";
+import { BrowserRouter } from "react-router-dom";
+
+const AppTest = () => {
+  return <div>Test App</div>;
+};
 
 ReactDOM.render(
   <React.StrictMode>
-    <Provider store={appStore} >
+    <Provider store={appStore}>
       <BrowserRouter>
-        <App />
+        {/* <App /> */}
+        <AppTest />
       </BrowserRouter>
     </Provider>
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );
 
 // If you want your app to work offline and load faster, you can change

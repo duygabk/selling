@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -12,6 +12,12 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+
+import { api_login_request } from '../../utils/axios';
+import { Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
+import { setCurrentUser } from '../../store/action/userAction';
+import { TOKEN_ITEM } from '../../constants';
 
 function Copyright() {
   return (
@@ -46,8 +52,34 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SignIn() {
+function Login(props) {
   const classes = useStyles();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
+  const [redirect, setRedirect] = useState(false);
+
+  const doSubmit = (e) => {
+    e.preventDefault();
+    // console.log(username, password, remember);
+    api_login_request({ username, password }).then(res => {
+      // console.log(res);
+      if (res.data.error === false) {
+        const userInfo = res.data.data ? res.data.data : null;
+        if (remember) {
+          localStorage.setItem(TOKEN_ITEM, res.data.token)
+        }
+        props.setCurrentUser(userInfo);
+        setRedirect(true)
+      } else { // display error from server
+
+      }
+    }).catch(err => {
+      console.log(err.message);
+    })
+  }
+
+  if (redirect) return <Redirect to="/home" from="/user/login" />
 
   return (
     <Container component="main" maxWidth="xs">
@@ -59,17 +91,20 @@ export default function SignIn() {
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
-        <form className={classes.form} noValidate>
+        <form className={classes.form}  onSubmit={doSubmit}>
           <TextField
             variant="outlined"
             margin="normal"
             required
             fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
+            id="username"
+            label="Username"
+            name="username"
+            autoComplete="username"
             autoFocus
+            onChange={(e) => {
+              setUsername(e.target.value);
+            }}
           />
           <TextField
             variant="outlined"
@@ -81,9 +116,14 @@ export default function SignIn() {
             type="password"
             id="password"
             autoComplete="current-password"
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
           />
           <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
+            control={<Checkbox checked={remember} color="primary" onChange={(e) => {
+              setRemember(e.target.checked);
+            }}/>}
             label="Remember me"
           />
           <Button
@@ -115,3 +155,19 @@ export default function SignIn() {
     </Container>
   );
 }
+
+function mapStateToProps(state) {
+  return {
+    user: state.user,
+  }
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    setCurrentUser: (userInfo) => {
+      dispatch(setCurrentUser(userInfo))
+    },
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Login);

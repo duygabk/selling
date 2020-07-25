@@ -3,7 +3,7 @@ import { SET_CURRENT_USER, GET_ALL_USER } from '../constants';
 const userInitState = {
   users: {},
   currentUser: {
-
+    
   }
 };
 

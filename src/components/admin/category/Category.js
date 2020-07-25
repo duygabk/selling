@@ -31,8 +31,11 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 
 import Notification from '../../common/Notification';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 
 import { apiAddNewMenuToServer, apiRemoveMenuFromServer, apiUpdateMenuToServer } from '../../../utils/axios';
 
@@ -135,8 +138,9 @@ const Confirm = (props) => {
 
 const SubMenuItem = (props) => {
   const [open, setOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
   const classes = useStyles();
-  const { doRemove, doChangeContent, children } = props;
+  const { parents, doRemove, doChangeContent, children } = props;
 
   const hdlRemoveSubMenu = () => {
     // console.log("open confirm");
@@ -159,6 +163,39 @@ const SubMenuItem = (props) => {
     doChangeContent(buffChild);
   }
 
+  const hdlOpenChangeParent = (event) => {
+    setAnchorEl(event.currentTarget);
+  }
+
+  const hdlCloseParentMenu = () => {
+    setAnchorEl(null);
+  }
+
+  const hdlChangeParentMenu = (parent) => {
+    const buffChild = { ...children };
+    buffChild.parent = parent.id;
+    doChangeContent(buffChild);
+    setAnchorEl(null);
+  }
+
+  const parentList = (
+    <Menu
+      id="simple-menu"
+      anchorEl={anchorEl}
+      keepMounted
+      open={Boolean(anchorEl)}
+      onClose={hdlCloseParentMenu}
+    >
+      {
+         parents.map(parent => {
+          return(
+            <MenuItem onClick={() => hdlChangeParentMenu(parent)}>{parent.menu_title}</MenuItem>
+          )
+        })
+      }
+    </Menu>
+  )
+
   return (
     <>
       <ListItem button className={classes.nested}>
@@ -168,7 +205,12 @@ const SubMenuItem = (props) => {
         <ListItemText>
           <EditableText content={children.menu_title} doChangeContent={hdlChangeContent}/>
         </ListItemText>
-        <DeleteIcon style={{color: red[900]}} onClick={hdlRemoveSubMenu}/>
+        <DeleteIcon style={{color: red[900], marginRight: 1}} onClick={hdlRemoveSubMenu}/>
+
+        <DragIndicatorIcon onClick={hdlOpenChangeParent}/>
+
+        { parentList }
+
       </ListItem>
       <Divider />
 
@@ -185,12 +227,12 @@ const OneCategory = (props) => {
   const [parentTitle, setParentTitle] = useState("");
   const [openConfirm, setOpenConfirm] = useState(false);
 
-  const { parent, children, onChangeMenu, onRemoveMenu } = props;
+  const { parents, parent, children, onChangeMenu, onRemoveMenu } = props;
 
   useEffect(() => {
     setParentTitle(parent.menu_title);
     setChildrens(children);
-  }, []);
+  }, [props]);
 
   const classes = useStyles();
 
@@ -208,10 +250,11 @@ const OneCategory = (props) => {
 
   const hdlDoAddSubMenu = () => {
     const newChildren = {
-      menu_title: "",
+      menu_title: "New Children Menu",
       parent: parent.id,
     }
-    console.log(childrens, {newChildren});
+    const buffChilds = [ ...childrens, newChildren]
+    setChildrens(buffChilds);
   }
 
   const hdlChangeParentTitle = text => {
@@ -235,8 +278,8 @@ const OneCategory = (props) => {
     setOpenConfirm(false);
   }
 
-  const subMenus =  children.length ? children.map((child, key) => {
-    return <SubMenuItem children={child} key={key} doChangeContent={hdlChangeChildTitle} doRemove={hdlRemoveChildren}/>
+  const subMenus =  childrens.length ? childrens.map((child, key) => {
+    return <SubMenuItem parents={parents} children={child} key={key} doChangeContent={hdlChangeChildTitle} doRemove={hdlRemoveChildren}/>
   }) : null;
 
   return (
@@ -291,74 +334,136 @@ const OneCategory = (props) => {
   )
 }
 
+const STS_OK = "success";
+const STS_ERROR = "error";
+const MESS_ADD_MENU_ERROR = "Oop! Add menu error!!!";
+const MESS_ADD_MENU_OK = "Success! Add Menu OK";
+const MESS_UPDATE_OK = "Success! Update Menu OK";
+const MESS_UPDATE_ERROR = "Oop! update menu error!!!";
+const MESS_REMOVE_OK = "Success! Remome OK";
+const MESS_REMOVE_ERROR = "Oop! Remove menu error!!!";
+
 function Category(props) {
 
-  const { updateMenuToStore } = props;
+  const { menu, updateMenuToStore } = props;
   const [appMenu, setAppMenu] = useState([]);
   const [showNotification, setShowNotification] = useState(false);
   const [messageNotification, setMessageNotification] = useState("");
 
   useEffect(() => {
     document.title = "Admin/Category";
-    setAppMenu(props.menu.menu);
-  }, [props.menu]);
+    setAppMenu(menu.menu);
+    // console.log(menu.menu);
+  }, [menu]);
 
   // console.log(appMenu);
 
   const classes = useStyles();
 
-  const hdlAddNewCategory = () => {
-
+  const hdlAddNewParent = () => {
+    const buffAppMenu = {
+      menu_title: "New Parent",
+      parent: 0,
+    };
+    hdlOnChangeMenu(buffAppMenu);
+    // setAppMenu(buffAppMenu);
   }
 
-  const hdlOnChangeMenu = menu => {
-    // console.log("menu change ", menu);
-    // update menu to server
-    apiUpdateMenuToServer(menu)
-      .then(res => {
-        if ( res.data && res.data.error === false ) {
-          setShowNotification(true);
-          setMessageNotification("Update Menu OK!");
-        }
-      })
-      .catch(err => {
-        setShowNotification(true);
-        setMessageNotification(err.message);
-        console.log(err.message)
-      });
+  const hdlOnChangeMenu = async (menuChange) => {
+    // console.log("menu change ", menuChange);
+    // check id to classify add new menu or update,
+    let apiResponse = null;
+    if ( menuChange.id ) {  // update
+      // update menu to server
+      apiResponse = await apiUpdateMenuToServer(menuChange)
+        .then(res => {
+          if ( res.data && res.data.error === false ) {
+            // update to Store
+            const updateMenu = appMenu.map(x => {
+              return x.id === menuChange.id ? menuChange : x;
+            })
+            // console.log(updateMenu);
+            updateMenuToStore(updateMenu);
+            return { status: STS_OK, message: MESS_UPDATE_OK };
+          }
+          return { status: STS_ERROR, message: res.data.message };
+        })
+        .catch(err => {
+          // console.log(err.message)
+          return { status: STS_ERROR, message: err.message };
+        });
+    } else { // add new menu
+      // console.log("add new menu");
+      apiResponse = await apiAddNewMenuToServer(menuChange)
+        .then(res => {
+          // console.log(res.data);
+          if( !res.data ) return;
+          if ( res.data && res.data.error === false ) {
+            // update store
+            // console.log(appMenu);
+            const updateMenu = [ ...appMenu, {...menuChange, id: res.data.data.insertId} ];
+            // console.log(updateMenu);
+            updateMenuToStore(updateMenu);
+            return { status: STS_OK, message: MESS_ADD_MENU_OK };
+          }
+          //
+          return {status: STS_ERROR, message: res.data.message };
+        })
+        .catch(err => {
+            // console.log(err.message)
+            return { status: STS_ERROR, message: err.message }
+        })
+    }
+    // console.log(apiResponse);
+    setShowNotification(true);
+    setMessageNotification(apiResponse.message);
   }
 
-  const hdlRemoveMenu = removeMenu => {
-
+  const hdlRemoveMenu = async (removeMenu) => {
     // need remove menu is parent or children, if parent -> move all it's children to common menu
-    let needChangeMenu = null;
+    let needChangeMenu = [];
+    let apiResponse = null;
     const { parent } = removeMenu;
     if ( parent === 0 ) {  // parent menu
-      needChangeMenu = appMenu.filter(x => x.parent === removeMenu.id);
-    } else { // Children Menu, -> remove
-
+      needChangeMenu = appMenu.filter( x => x.parent === removeMenu.id );
     }
     // send need delete menu to server
-    if ( needChangeMenu ) {
-      const changeList = needChangeMenu
-        .map(x => {
-          return { ...x, parent: 0 }
-        })
-        // .map(menuToUpdate => {
-        //   return apiUpdateMenuToServer(menuToUpdate);
-        // });
+    if ( needChangeMenu.length ) {
+      const changeList = needChangeMenu.map(x => {
+          return { ...x, parent: 1 }
+      })
 
-      console.log(changeList);
+      apiResponse = await Promise.all(changeList.map(x => apiUpdateMenuToServer(x)));
 
-      //update to store and call api server
-      const updateMenu = appMenu.map(x => {
-        return ( x.parent === removeMenu.id ) ? { ...x, parent: 1 } : x;
-      }).filter( y => y.id !== removeMenu.id );
-      console.log({ updateMenu });
-      // update to Store
-      updateMenuToStore(updateMenu);
+      setShowNotification(true);
+      ( apiResponse && apiResponse.length ) && apiResponse.map(res => {
+        console.log(res);
+        const mess = res.data.error ? res.data.message : MESS_UPDATE_OK;
+        setMessageNotification(mess);
+      })
     }
-    console.log("remove menu ", removeMenu);
+
+    apiResponse = await apiRemoveMenuFromServer(removeMenu.id)
+      .then(res => {
+          console.log(res);
+          if ( !res ) return { status: STS_ERROR, message: MESS_REMOVE_ERROR };
+          if ( res.data && !res.data.error ) {
+            // update to store
+            const updateMenu = appMenu.filter( x => x.id !== removeMenu.id ).map(x => {
+              return ( x.parent === removeMenu.id ) ? { ...x, parent: 1 } : x;
+            });
+            console.log({ updateMenu });
+            updateMenuToStore(updateMenu);
+            return { status: STS_OK, message: MESS_REMOVE_OK };
+          }
+          return { status: STS_ERROR, message: res.data.message };
+      })
+      .catch(err => {
+        return { status: STS_ERROR, message: err.message }
+      })
+    setShowNotification(true);
+    setMessageNotification(apiResponse.message);
+
   }
 
   const hdlCloseNotification = () => {
@@ -371,7 +476,7 @@ function Category(props) {
     // const hideRemove = (key === menus.length - 1) ? true : false;
     const children = appMenu.filter( x => x.parent === parent.id );
     return (
-      <OneCategory parent={parent} key={key} children={children} onChangeMenu={hdlOnChangeMenu}  onRemoveMenu={hdlRemoveMenu}/>
+      <OneCategory parents={parents} parent={parent} key={key} children={children} onChangeMenu={hdlOnChangeMenu}  onRemoveMenu={hdlRemoveMenu}/>
     )
   }) : null;
 
@@ -392,7 +497,7 @@ function Category(props) {
         fullWidth={true}
         variant='contained'
         startIcon={<PlaylistAddIcon />}
-        style={{ backgroundColor: green[900], color: 'white' }} onClick={hdlAddNewCategory}
+        style={{ backgroundColor: green[900], color: 'white' }} onClick={hdlAddNewParent}
       >
         Add New Category
       </Button>

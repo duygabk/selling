@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { connect } from 'react-redux';
+import React from 'react';
 import { fade, makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -25,10 +23,13 @@ import HelpIcon from '@material-ui/icons/Help';
 import ContactlessIcon from '@material-ui/icons/Contactless';
 import { Button, Divider } from '@material-ui/core';
 
+import { Link } from 'react-router-dom';
+import { connect } from 'react-redux';
 
 const useStyles = makeStyles((theme) => ({
   grow: {
     flexGrow: 1,
+    overflow: 'hidden',
   },
   menuButton: {
     marginRight: theme.spacing(2),
@@ -39,6 +40,7 @@ const useStyles = makeStyles((theme) => ({
   },
   menuButton2: {
     marginLeft: theme.spacing(1),
+    // lineHeight: 10,
   },
   title: {
     display: 'none',
@@ -97,15 +99,18 @@ const useStyles = makeStyles((theme) => ({
   },
   button: {
     margin: theme.spacing(1),
-    fontWeight: 'bolder',
+    // fontWeight: 'bolder',
+    color: '#fff',
   }
 }));
 
-export default function PrimarySearchAppBar() {
+function WebAppBar(props) {
+  const { currentUser } = props.user;
+  // console.log({currentUser});
   const classes = useStyles();
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
-  const [mobileSider, setMobileSider] = useState(null);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
+  const [mobileSider, setMobileSider] = React.useState(null);
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -145,6 +150,7 @@ export default function PrimarySearchAppBar() {
     >
       <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
       <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+      <MenuItem onClick={handleMenuClose}><Link to="/user/logout">Logout</Link></MenuItem>
     </Menu>
   );
 
@@ -186,62 +192,79 @@ export default function PrimarySearchAppBar() {
         </IconButton>
         <p>Profile</p>
       </MenuItem>
+      <MenuItem>
+        <Link to="/user/logout">
+          <p>Logout</p>
+        </Link>
+      </MenuItem>
     </Menu>
   );
 
-  const renderUserBtn = (
-    <>
-    <Button 
-      variant="outlined"
-      color="default" 
-      startIcon={<AssignmentIndSharpIcon/>}
-      className={classes.button}
-    >
-      Login
-    </Button>
+  const renderUserBtn = (currentUser && currentUser.username ) ?
+    [
+      <p key="1">Hello <strong style={{color: 'red'}}>{currentUser.username}</strong></p>,
+      <Link to="/admin" key="2">
+        <Button
+          color="secondary"
+          variant="outlined"
+          className={classes.button}
+          >
+          Admin
+        </Button>
+      </Link>
+    ] :
+    [
+      <Link to="/user/login" key="1">
+        <Button
+          variant="outlined"
+          color="default"
+          startIcon={<AssignmentIndSharpIcon/>}
+          className={classes.button}
+        >
+          Login
+        </Button>
+      </Link>,
 
-    <Button
-     color="default"
-     variant="outlined"
-     endIcon={<PersonAddSharpIcon/>}
-     className={classes.button}
-    >
-      Signup
-    </Button>
-    </>
-  );
+      <Link to="/user/signup" key="2">
+        <Button
+         color="default"
+         variant="outlined"
+         endIcon={<PersonAddSharpIcon/>}
+         className={classes.button}
+        >
+          Signup
+        </Button>
+      </Link>,
+  ]
 
-  const renderDesktopMenu = (
-    <>
-      <MenuItem>
-        <IconButton edge="end" className={classes.menuButton2} color="inherit">
-          <HomeIcon />
-        </IconButton>
-        <p>Home</p>
-      </MenuItem>
-      <MenuItem>
-        <IconButton edge="end" className={classes.menuButton2} color="inherit">
-          <ChildFriendlyIcon />
-        </IconButton>
-        <p>Products</p>
-      </MenuItem>
-      <MenuItem>
-        <IconButton edge="end" className={classes.menuButton2} color="inherit">
-          <ContactlessIcon/>
-        </IconButton>
-        <p>Contact</p>
-      </MenuItem>
-      <MenuItem>
-        <IconButton edge="end" className={classes.menuButton2} color="inherit">
-          <HelpIcon/>
-        </IconButton>
-        <p>About</p>
-      </MenuItem>
-    </>
-  );
+
+  const renderDesktopMenu = [
+    <MenuItem className={classes.menuButton2} key="1">
+      <Link to="/home"><HomeIcon /><code>Home</code></Link>
+    </MenuItem>,
+    <MenuItem key="2">
+      <IconButton edge="end" className={classes.menuButton2} color="inherit">
+        <ChildFriendlyIcon />
+      </IconButton>
+      <p>Products</p>
+    </MenuItem>,
+    <MenuItem key="3">
+      <IconButton edge="end" className={classes.menuButton2} color="inherit">
+        <ContactlessIcon/>
+      </IconButton>
+      <p>Contact</p>
+    </MenuItem>,
+     <MenuItem key="4">
+      <IconButton edge="end" className={classes.menuButton2} color="inherit">
+        <HelpIcon/>
+      </IconButton>
+      <p>About</p>
+    </MenuItem>,
+  ];
+
 
   const renderMobileSider = (
-    <Menu 
+    <Menu
       id="menu-mobile"
       anchorEl={mobileSider}
       anchorOrigin={{
@@ -268,7 +291,7 @@ export default function PrimarySearchAppBar() {
 
   return (
     <div className={classes.grow} style={{ backgroundColor: '#fff' }}>
-      <AppBar position="static" color="primary">
+      <AppBar position="static" color="primary" style={{ backgroundColor: '#1f6b52' }}>
         <Toolbar>
           <IconButton
             edge="start"
@@ -279,9 +302,11 @@ export default function PrimarySearchAppBar() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography className={classes.title} variant="h6" noWrap>
-            tuyenbn
-          </Typography>
+          <Link to="/home">
+            <Typography className={classes.title} variant="h6" noWrap>
+              tuyenbn
+            </Typography>
+          </Link>
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <SearchIcon />
@@ -345,3 +370,11 @@ export default function PrimarySearchAppBar() {
     </div>
   );
 }
+
+function mapStateToProps(state) {
+  return {
+    user: state.user,
+  }
+}
+
+export default connect(mapStateToProps)(WebAppBar);

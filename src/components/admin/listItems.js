@@ -47,12 +47,15 @@ export const mainListItems = (
       </ListItemIcon>
       <ListItemText primary="Reports" />
     </ListItem>
-    <ListItem button>
-      <ListItemIcon>
-        <LayersIcon />
-      </ListItemIcon>
-      <ListItemText primary="Integrations" />
-    </ListItem>
+
+    <Link to="/admin/category" style={linkStyle}>
+      <ListItem button>
+        <ListItemIcon>
+          <LayersIcon />
+        </ListItemIcon>
+        <ListItemText primary="Menu" />
+      </ListItem>
+    </Link>
 
     <Link to="/admin/products" style={linkStyle}>
     <ListItem button>

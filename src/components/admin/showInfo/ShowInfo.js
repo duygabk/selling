@@ -22,8 +22,9 @@ const useStyles = makeStyles((theme) => ({
 function ShowInfo () {
   const classes = useStyles();
   const fixedHeightPaper = clsx(classes.paper, classes.fixedHeight);
+
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={3}>  
     {/* Chart */}
       <Grid item xs={12} md={8} lg={9}>
         <Paper className={fixedHeightPaper}>

@@ -122,9 +122,8 @@ function App(props) {
                         <BreadCrumbs/>
                         <br/><br/>
                         <Grid container spacing={2}>
-
+                          {/* 
                           <Grid item xs={12} sm={4} spacing={2}>
-                            {/* <Product/> */}
                             <CardProduct />
                           </Grid>
                           <Grid item xs={12} sm={4} spacing={2}>
@@ -132,7 +131,9 @@ function App(props) {
                           </Grid>
                           <Grid item xs={12} sm={4} spacing={2}>
                             <OneCard />
-                          </Grid>
+                          </Grid> 
+                          */}
+
                         </Grid>
 
                       </Grid>

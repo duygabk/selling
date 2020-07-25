@@ -54,10 +54,7 @@ export function apiAddNewMenuToServer (menu) {
 export function apiRemoveMenuFromServer (menuId) {
   return fetching({
     method: 'DELETE',
-    url: `${BASE_URL}/menu/remove`,
-    data: {
-      id: JSON.stringify(menuId),
-    }
+    url: `${BASE_URL}/menu/remove/${menuId}`,
   })
 }
 
